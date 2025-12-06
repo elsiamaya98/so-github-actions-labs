@@ -1,0 +1,41 @@
+name: Multi-OS System Check
+on: [push, workflow_dispatch]
+
+jobs:
+  system-info:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # 1. Descargar el código del repositorio
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Linux y Mac
+      - name: Collect System Info on Linux/Mac
+        if: matrix.os != 'windows-latest'
+        run: |
+          echo "=== Sistema Operativo ===" > system-info.txt
+          uname -a >> system-info.txt
+          echo "=== Variables de Entorno ===" >> system-info.txt
+          env >> system-info.txt
+        shell: bash
+
+      # 2.1. Windows
+      - name: Collect System Info on Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          echo "=== Sistema Operativo ===" > system-info.txt
+          echo "Windows System" >> system-info.txt
+          echo "=== Variables de Entorno ===" >> system-info.txt
+          Get-ChildItem Env: >> system-info.txt
+        shell: powershell
+
+      # 3. Subir artifact
+      - name: Upload System Info
+        uses: actions/upload-artifact@v4
+        with:
+          name: system-info-${{ matrix.os }}
+          path: system-info.txt
